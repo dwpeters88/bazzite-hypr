@@ -29,13 +29,13 @@ enable_copr erikreider/SwayNotificationCenter
 enable_copr pgdev/ghostty
 enable_copr wezfurlong/wezterm-nightly
 
-# Aurora-dx-nvidia already has fish, but if there are conflicts with ghostty, handle them
-# ncurses-term dependency is in conflict with ghostty so remove fish if needed
-# dnf5 remove -y fish
+# Handle package conflicts - remove ncurses-term before installing ghostty
+dnf5 remove -y ncurses-term || true
 
 # Install Hyprland and essential Wayland components
 # Aurora already has NVIDIA drivers, so we focus on the Hyprland ecosystem
-dnf5 install -y --setopt=install_weak_deps=False \
+# Use --skip-unavailable to handle packages that might already be installed
+dnf5 install -y --setopt=install_weak_deps=False --skip-unavailable \
     xdg-desktop-portal-hyprland \
     hyprland \
     hyprlock \
@@ -56,7 +56,6 @@ dnf5 install -y --setopt=install_weak_deps=False \
     wofi \
     rofi-wayland \
     swaync \
-    wl-clipboard \
     grim \
     slurp \
     brightnessctl \
@@ -67,20 +66,17 @@ dnf5 install -y --setopt=install_weak_deps=False \
     wdisplays \
     SwayNotificationCenter \
     NetworkManager-tui \
-    tmux \
     ghostty \
     wezterm \
     blueman \
-    qt5-qtwayland \
-    qt6-qtwayland \
-    firefox-wayland \
+    firefox \
     mpv \
     imv \
     nautilus \
     gnome-terminal
 
 # Developer tools (Aurora-dx already has many, but add Hyprland-specific ones)
-dnf5 install -y --setopt=install_weak_deps=False \
+dnf5 install -y --setopt=install_weak_deps=False --skip-unavailable \
     neovim \
     git \
     curl \
@@ -90,15 +86,11 @@ dnf5 install -y --setopt=install_weak_deps=False \
     htop \
     btop
 
-# Remove gaming-focused packages that might conflict (since we're moving from Bazzite base)
-# Aurora doesn't have these by default, but just in case
-# dnf5 remove -y steam gamescope
-
 # Clean up - disable COPRs so they don't end up enabled on the final image
-dnf5 -y copr disable solopasha/hyprland
-dnf5 -y copr disable erikreider/SwayNotificationCenter  
-dnf5 -y copr disable pgdev/ghostty
-dnf5 -y copr disable wezfurlong/wezterm-nightly
+rm -f /etc/yum.repos.d/_copr_solopasha-hyprland.repo
+rm -f /etc/yum.repos.d/_copr_erikreider-SwayNotificationCenter.repo  
+rm -f /etc/yum.repos.d/_copr_pgdev-ghostty.repo
+rm -f /etc/yum.repos.d/_copr_wezfurlong-wezterm-nightly.repo
 
 #### System Configuration
 
@@ -109,13 +101,9 @@ echo "auth include system-auth" >> /etc/pam.d/hyprlock
 # Enable necessary services
 systemctl enable podman.socket
 
-# Aurora uses GDM by default, but for Hyprland we might want SDDM
-# Uncomment the following lines if you prefer SDDM over GDM:
-# systemctl disable gdm
-# systemctl enable sddm
-
-# Ensure GDM works well with Hyprland (default for Aurora)
-systemctl enable gdm
+# Aurora uses its own display manager setup
+# Aurora-dx-nvidia already has a display manager configured, so we don't need to enable GDM
+# The Hyprland desktop session will be available automatically
 
 # Create directories for Nix (if using Nix package manager)
 mkdir -p /nix/var/nix/gcroots/per-user
