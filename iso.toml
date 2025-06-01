@@ -1,9 +1,5 @@
-[customizations.installer.kickstart]
-contents = """
-%post
-bootc switch --mutate-in-place --transport registry ghcr.io/dwpeters88/aurora-hyprland:latest
-%end
-"""
+# ISO Configuration for Aurora-Hyprland
+# This creates a bootable ISO that will switch to your custom Aurora image after installation
 
 [customizations.installer.modules]
 enable = [
@@ -17,3 +13,11 @@ disable = [
   "org.fedoraproject.Anaconda.Modules.Subscription",
   "org.fedoraproject.Anaconda.Modules.Timezone" 
 ]
+
+[customizations.installer.kickstart]
+contents = """
+%post
+# Switch to your locally built Aurora-Hyprland image after installation
+bootc switch --mutate-in-place --transport registry localhost/yourimage:latest
+%end
+"""
